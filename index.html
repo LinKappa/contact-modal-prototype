@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Modal – Prototyp</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* ===== FONTS ===== */
+    @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400&display=swap');
+
+    :root {
+      /* Design Tokens */
+      --color-bg: #2D2D2D;
+      --color-cream: #E8E1D5;
+      --color-gray: #717171;
+      --color-white: #FFFFFF;
+      --color-green: #2F6347;
+      --color-overlay: rgba(0, 0, 0, 0.45);
+
+      --font-serif: 'Libre Baskerville', Georgia, serif;
+      --font-sans: 'Inter', Helvetica, Arial, sans-serif;
+
+      --radius: 4px;
+      --transition: 0.3s ease;
+
+      /* Panel width: 33% of viewport */
+      --panel-width: 33vw;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-bg);
+      color: var(--color-cream);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== FAKE LANDING PAGE (Hintergrund) ===== */
+    .landing-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      transition: filter var(--transition);
+    }
+
+    .landing-page.dimmed {
+      filter: brightness(0.6);
+      pointer-events: none;
+    }
+
+    .landing-logo {
+      width: 80px;
+      height: 80px;
+      border: 1px solid var(--color-cream);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .landing-logo span {
+      font-family: var(--font-serif);
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: var(--color-cream);
+    }
+
+    .landing-title {
+      font-family: var(--font-serif);
+      font-size: clamp(48px, 8vw, 96px);
+      font-weight: 400;
+      color: var(--color-cream);
+      text-align: center;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .landing-subtitle {
+      font-family: var(--font-serif);
+      font-size: clamp(16px, 2vw, 24px);
+      font-weight: 400;
+      color: var(--color-gray);
+      margin-bottom: 3rem;
+    }
+
+    /* Hamburger Menu Icon (top left) */
+    .hamburger {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 26px;
+      height: 1px;
+      background: var(--color-cream);
+    }
+
+    /* Contact CTA Link */
+    .contact-cta {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 300;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--color-cream);
+      text-decoration: none;
+      border: 1px solid var(--color-gray);
+      padding: 14px 40px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+      background: transparent;
+    }
+
+    .contact-cta:hover {
+      background: var(--color-cream);
+      color: var(--color-bg);
+    }
+
+    /* ===== OVERLAY ===== */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--color-overlay);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition), visibility var(--transition);
+      z-index: 100;
+      cursor: pointer;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ===== CONTACT MODAL (Slide-in Drawer) ===== */
+    .contact-modal {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: var(--panel-width);
+      min-width: 380px;
+      height: 100vh;
+      background-color: var(--color-bg);
+      z-index: 200;
+      transform: translateX(100%);
+      transition: transform var(--transition);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .contact-modal.open {
+      transform: translateX(0);
+    }
+
+    /* ===== MODAL CONTENT ===== */
+    .modal-inner {
+      padding: 3rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    /* Close Button (X) – custom SVG-style thin cross */
+    .close-btn {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity var(--transition);
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .close-btn::before,
+    .close-btn::after {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 1.5px;
+      background-color: var(--color-cream);
+      border-radius: 0.5px;
+    }
+
+    .close-btn::before {
+      transform: rotate(45deg);
+    }
+
+    .close-btn::after {
+      transform: rotate(-45deg);
+    }
+
+    .close-btn:hover {
+      opacity: 0.7;
+    }
+
+    /* Headline */
+    .modal-headline {
+      font-family: var(--font-serif);
+      font-size: 42px;
+      font-weight: 400;
+      color: var(--color-cream);
+      line-height: 1.25;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Divider */
+    .modal-divider {
+      width: 100%;
+      height: 1px;
+      background-color: var(--color-gray);
+      margin-bottom: 3rem;
+    }
+
+    /* Sub-Headline */
+    .modal-subheadline {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--color-cream);
+      margin-bottom: 2.5rem;
+    }
+
+    /* Form */
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-group label {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--color-gray);
+    }
+
+    .form-group input,
+    .form-group textarea {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--color-cream);
+      background: transparent;
+      border: 1px solid var(--color-gray);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color var(--transition);
+      width: 100%;
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(113, 113, 113, 0.5);
+    }
+
+    .form-group input:hover,
+    .form-group textarea:hover,
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--color-white);
+    }
+
+    .form-group textarea {
+      min-height: 160px;
+      resize: vertical;
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--color-bg);
+      background-color: var(--color-cream);
+      border: none;
+      border-radius: var(--radius);
+      padding: 16px 32px;
+      cursor: pointer;
+      transition: background-color var(--transition), color var(--transition);
+      align-self: flex-start;
+      margin-top: 0.5rem;
+    }
+
+    .submit-btn:hover {
+      background-color: var(--color-green);
+      color: var(--color-cream);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1024px) {
+      .contact-modal {
+        width: 50vw;
+        min-width: 360px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .contact-modal {
+        width: 100vw;
+        min-width: unset;
+      }
+
+      .modal-headline {
+        font-size: 36px;
+      }
+
+      .modal-subheadline {
+        font-size: 24px;
+      }
+
+      .modal-inner {
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== FAKE LANDING PAGE (Hintergrund) ===== -->
+  <div class="landing-page" id="landingPage">
+    <div class="hamburger">
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="landing-logo">
+      <span>LOGO</span>
+    </div>
+
+    <h1 class="landing-title">Yoga<br>Planter</h1>
+    <p class="landing-subtitle">Handcrafted ceramic planters</p>
+
+    <button class="contact-cta" id="openModal">Contact</button>
+  </div>
+
+  <!-- ===== OVERLAY ===== -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- ===== CONTACT MODAL ===== -->
+  <div class="contact-modal" id="contactModal">
+    <div class="modal-inner">
+      <button class="close-btn" id="closeModal" aria-label="Close"></button>
+
+      <h2 class="modal-headline">Connect With Us</h2>
+      <div class="modal-divider"></div>
+      <p class="modal-subheadline">Send an inquiry</p>
+
+      <form class="contact-form" onsubmit="return false;">
+        <div class="form-group">
+          <label for="name">Your Name</label>
+          <input type="text" id="name" name="name" placeholder="Jane Doe">
+        </div>
+
+        <div class="form-group">
+          <label for="email">E-Mail</label>
+          <input type="email" id="email" name="email" placeholder="jane@example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" placeholder="Your message..."></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">Send Your Message</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== JAVASCRIPT ===== -->
+  <script>
+    const openBtn = document.getElementById('openModal');
+    const closeBtn = document.getElementById('closeModal');
+    const overlay = document.getElementById('overlay');
+    const modal = document.getElementById('contactModal');
+    const landing = document.getElementById('landingPage');
+
+    function openModal() {
+      modal.classList.add('open');
+      overlay.classList.add('active');
+      landing.classList.add('dimmed');
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+      overlay.classList.remove('active');
+      landing.classList.remove('dimmed');
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal);
+
+    // ESC key closes modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
+
+</body>
+</html>
